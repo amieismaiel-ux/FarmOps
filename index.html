@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14382c">
+<title>FarmOps | Farm Management</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--green:#14382c;--green2:#1f6048;--mint:#e8f4ed;--bg:#f3f6f4;--text:#1d2d26;--muted:#748178;--line:#e0e8e2;--white:#fff;--red:#b42318;--shadow:0 8px 28px #163c2910}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.topbar{background:var(--green);color:white;padding:17px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:20px;letter-spacing:-.5px}
+.logo{width:39px;height:39px;border-radius:13px;background:#d6f3df;color:var(--green);display:grid;place-items:center;font-size:23px}
+.top-actions{display:flex;align-items:center;gap:8px}
+button.primary{border:0;border-radius:12px;padding:12px 16px;background:var(--green2);color:white;font-weight:700}
+button.light{border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:white;color:var(--text)}
+button.darkbtn{border:1px solid #ffffff44;border-radius:10px;padding:8px 10px;background:#ffffff12;color:white}
+main{max-width:1150px;margin:auto;padding:22px 16px 60px}
+.hero{background:linear-gradient(120deg,#14382c,#28674d);color:white;padding:24px;border-radius:22px;box-shadow:var(--shadow)}
+.eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75;font-weight:800}
+.hero h1{font-size:clamp(25px,4vw,36px);line-height:1.12;margin:8px 0}
+.hero p{margin:8px 0 0;color:#d5e9dd}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:17px 0}
+.stat,.panel,.farm-card{background:white;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:var(--shadow)}
+.stat small{display:block;color:var(--muted);font-weight:600}
+.stat strong{display:block;font-size:27px;margin-top:5px;letter-spacing:-.7px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:24px 0 12px}
+.section-head h2{margin:0;font-size:20px}
+.farm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.farm-card{cursor:pointer;text-align:left;color:var(--text);width:100%;transition:transform .15s,border-color .15s}
+.farm-card:hover{transform:translateY(-2px);border-color:#9fc9ae}
+.farm-icon{width:42px;height:42px;border-radius:13px;background:var(--mint);display:grid;place-items:center;font-size:22px}
+.farm-card h3{margin:12px 0 3px;font-size:18px}
+.muted{color:var(--muted);font-size:13px}
+.pill{display:inline-block;border-radius:100px;padding:5px 9px;background:var(--mint);color:var(--green2);font-size:12px;font-weight:800}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.stack{display:grid;gap:12px}
+.field{display:grid;gap:6px}
+label{font-size:13px;color:#526157;font-weight:750}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #d5dfd8;border-radius:11px;background:white;color:var(--text);outline:none}
+input:focus,select:focus,textarea:focus{border-color:#39855e;box-shadow:0 0 0 3px #39855e18}
+textarea{min-height:85px;resize:vertical}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.notice{padding:12px 14px;border-radius:12px;background:#edf5ff;color:#214e78;font-size:13px;margin-bottom:14px}
+.error{background:#fff0ee;color:var(--red);padding:12px;border-radius:12px;margin:12px 0}
+.success{background:#e8f7ed;color:#21643a;padding:12px;border-radius:12px;margin:12px 0}
+.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed #cad8ce;border-radius:14px}
+.house-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.house-item{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff}
+.login-wrap{min-height:calc(100vh - 74px);display:grid;place-items:center;padding:22px}
+.login-card{width:min(100%,440px);background:white;padding:25px;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.login-card h1{margin:8px 0;font-size:29px}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:20;background:#172c22;color:white;border-radius:12px;padding:12px 17px;box-shadow:var(--shadow);max-width:90%;display:none}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.farm-grid,.house-list{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.topbar{padding:13px}.brand{font-size:18px}main{padding:15px 12px 45px}.hero{padding:20px}.stat{padding:13px}.stat strong{font-size:24px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo">⌂</div><div>FarmOps<div style="font-size:11px;font-weight:500;opacity:.7;letter-spacing:1px">FARM MANAGEMENT</div></div></div>
+  <div class="top-actions">
+    <button class="darkbtn" id="langBtn">EN</button>
+    <button class="darkbtn hidden" id="logoutBtn">Log keluar</button>
+  </div>
+</header>
+
+<section id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="eyebrow" style="color:#39855e">Farm operations platform</div>
+    <h1 data-i="welcome">Selamat datang</h1>
+    <p class="muted" data-i="loginHint">Log masuk untuk mengurus farm yang ditugaskan kepada anda.</p>
+    <form id="loginForm" class="stack">
+      <div class="field"><label data-i="email">E-mel</label><input id="email" type="email" autocomplete="username" required placeholder="nama@syarikat.com"></div>
+      <div class="field"><label data-i="password">Kata laluan</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="primary" type="submit" data-i="login">Log masuk</button>
+    </form>
+    <div id="loginMessage"></div>
+    <p class="muted" style="margin-top:18px" data-i="adminNote">Akaun staf dicipta oleh bos/admin. Pendaftaran terbuka tidak dibenarkan.</p>
+  </div>
+</section>
+
+<main id="appView" class="hidden">
+  <section class="hero">
+    <div class="eyebrow" data-i="staffPortal">Staff portal</div>
+    <h1 data-i="dashboard">Dashboard FarmOps</h1>
+    <p id="welcomeUser">—</p>
+  </section>
+
+  <div class="grid">
+    <div class="stat"><small data-i="farms">Farm ditugaskan</small><strong id="farmCount">0</strong></div>
+    <div class="stat"><small data-i="houses">Jumlah kandang</small><strong id="houseCount">0</strong></div>
+    <div class="stat"><small data-i="records">Rekod ventilasi</small><strong id="recordCount">0</strong></div>
+    <div class="stat"><small data-i="updated">Rekod terbaru</small><strong id="lastUpdated" style="font-size:15px;margin-top:13px">—</strong></div>
+  </div>
+
+  <div id="noticeArea"></div>
+
+  <div class="section-head"><h2 data-i="yourFarms">Farm anda</h2><button class="light" id="refreshBtn" data-i="refresh">Muat semula</button></div>
+  <div id="farmList" class="farm-grid"><div class="empty">Loading…</div></div>
+
+  <section id="farmDetail" class="panel hidden" style="margin-top:20px">
+    <div class="row"><div><div class="eyebrow" style="color:#39855e" data-i="selectedFarm">Selected farm</div><h2 id="farmTitle" style="margin:4px 0">—</h2><div class="muted" id="farmMeta"></div></div><button class="light" id="backFarms" data-i="back">Kembali</button></div>
+    <div class="section-head"><h2 data-i="houseList">Senarai kandang</h2><span class="pill" id="housePill">0</span></div>
+    <div id="houseList" class="house-list"></div>
+  </section>
+
+  <section id="recordPanel" class="panel hidden" style="margin-top:20px">
+    <div class="row"><div><div class="eyebrow" style="color:#39855e" data-i="ventRecord">Ventilation record</div><h2 id="recordHouseTitle" style="margin:4px 0">—</h2><div id="ageInfo" class="muted"></div></div><button class="light" id="closeRecord" data-i="close">Tutup</button></div>
+    <div id="recordMessage"></div>
+    <form id="recordForm" class="stack" style="margin-top:18px">
+      <input id="recordHouseId" type="hidden">
+      <div class="formgrid">
+        <div class="field"><label data-i="setPoint">Set point (°C)</label><input id="setPoint" type="number" step="0.1" min="0" max="60" placeholder="Contoh: 28"></div>
+        <div class="field"><label data-i="fanManual">Fan manual</label><input id="fanManual" maxlength="120" placeholder="Contoh: Stage 1, 2"></div>
+        <div class="field"><label data-i="fanAuto">Fan auto</label><input id="fanAuto" maxlength="120" placeholder="Contoh: Stage 1–4"></div>
+        <div class="field"><label data-i="coolingPad">Cooling pad</label><input id="coolingPad" maxlength="120" placeholder="Contoh: 25%"></div>
+        <div class="field"><label data-i="alarm">Alarm</label><select id="alarm"><option value="">—</option><option value="None">Tiada / None</option><option value="Reported">Dilaporkan / Reported</option><option value="Investigating">Sedang diperiksa / Investigating</option><option value="Resolved">Selesai / Resolved</option></select></div>
+        <div class="field"><label data-i="recordTime">Tarikh & masa rekod</label><input id="recordTime" type="datetime-local" required></div>
+      </div>
+      <div class="field"><label data-i="notes">Catatan</label><textarea id="notes" maxlength="2000" placeholder="Catatan / Notes"></textarea></div>
+      <div class="notice" data-i="liveNotice">Ini ialah rekod yang dimasukkan oleh staf, bukan bacaan langsung daripada controller.</div>
+      <button class="primary" type="submit" data-i="saveRecord">Simpan rekod</button>
+    </form>
+  </section>
+  <div class="footer">FarmOps · Secure Farm Operations · v1.0</div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ============================
+   FARMOPS CONFIGURATION
+   Masukkan Project URL dan Publishable key anda.
+   Jangan masukkan secret/service_role key.
+============================ */
+const SUPABASE_URL = "https://cbvdwvbwltoccsrhemjv.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dQjXcTdIlWctsFlj5W7Dng_e_uEUseH";
+
+const configured =
+  SUPABASE_URL.startsWith("https://") &&
+  !SUPABASE_URL.includes("PASTE_") &&
+  SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_");
+
+const sb = configured
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+  : null;
+
+const $ = id => document.getElementById(id);
+let lang = "ms";
+let currentUser = null;
+let currentProfile = null;
+let farms = [];
+let houses = [];
+let activeFarm = null;
+let translations = {
+ms:{
+welcome:"Selamat datang",loginHint:"Log masuk untuk mengurus farm yang ditugaskan kepada anda.",email:"E-mel",password:"Kata laluan",login:"Log masuk",adminNote:"Akaun staf dicipta oleh bos/admin. Pendaftaran terbuka tidak dibenarkan.",staffPortal:"PORTAL STAF",dashboard:"Dashboard FarmOps",farms:"Farm ditugaskan",houses:"Jumlah kandang",records:"Rekod ventilasi",updated:"Rekod terbaru",yourFarms:"Farm anda",refresh:"Muat semula",selectedFarm:"FARM DIPILIH",back:"Kembali",houseList:"Senarai kandang",ventRecord:"REKOD VENTILASI",close:"Tutup",setPoint:"Set point (°C)",fanManual:"Fan manual",fanAuto:"Fan auto",coolingPad:"Cooling pad",alarm:"Alarm",recordTime:"Tarikh & masa rekod",notes:"Catatan",liveNotice:"Ini ialah rekod yang dimasukkan oleh staf, bukan bacaan langsung daripada controller.",saveRecord:"Simpan rekod",noFarms:"Tiada farm ditugaskan kepada akaun ini.",noHouses:"Belum ada kandang untuk farm ini.",loading:"Memuatkan…",logout:"Log keluar",age:"Umur ayam",days:"hari",weeks:"minggu",saved:"Rekod berjaya disimpan.",loginFailed:"Log masuk gagal. Semak e-mel dan kata laluan.",config:"Konfigurasi belum lengkap. Masukkan Project URL dan Publishable key dalam kod.",profileMissing:"Profil akaun tiada atau tidak aktif. Hubungi admin.",loadError:"Gagal memuatkan data. Semak polisi RLS dan sambungan Supabase.",adminStaff:"Akaun ini ialah admin. Gunakan FarmVision untuk mengurus semua farm.",lastNone:"Belum ada",location:"Lokasi",doc:"Tarikh DOC",chooseHouse:"Pilih kandang untuk rekod.",noRecords:"Tiada rekod ventilasi lagi.",recordCount:"Jumlah rekod",selectFarm:"Pilih farm untuk melihat kandang.",saveFailed:"Gagal menyimpan. Semak akses farm dan polisi RLS.",today:"Hari ini"
+},
+en:{
+welcome:"Welcome",loginHint:"Sign in to manage the farms assigned to you.",email:"Email",password:"Password",login:"Sign in",adminNote:"Staff accounts are created by the boss/admin. Open registration is disabled.",staffPortal:"STAFF PORTAL",dashboard:"FarmOps Dashboard",farms:"Assigned farms",houses:"Total houses",records:"Ventilation records",updated:"Latest record",yourFarms:"Your farms",refresh:"Refresh",selectedFarm:"SELECTED FARM",back:"Back",houseList:"House list",ventRecord:"VENTILATION RECORD",close:"Close",setPoint:"Set point (°C)",fanManual:"Fan manual",fanAuto:"Fan auto",coolingPad:"Cooling pad",alarm:"Alarm",recordTime:"Record date & time",notes:"Notes",liveNotice:"This is a staff-entered record, not a live controller reading.",saveRecord:"Save record",noFarms:"No farms are assigned to this account.",noHouses:"No houses have been added to this farm.",loading:"Loading…",logout:"Sign out",age:"Bird age",days:"days",weeks:"weeks",saved:"Record saved successfully.",loginFailed:"Sign-in failed. Check your email and password.",config:"Configuration incomplete. Add your Project URL and Publishable key in the code.",profileMissing:"Account profile is missing or inactive. Contact the admin.",loadError:"Could not load data. Check Supabase connection and RLS policies.",adminStaff:"This is an admin account. Use FarmVision to manage all farms.",lastNone:"None yet",location:"Location",doc:"DOC date",chooseHouse:"Choose a house to add a record.",noRecords:"No ventilation records yet.",recordCount:"Total records",selectFarm:"Choose a farm to see its houses.",saveFailed:"Save failed. Check farm access and RLS policies.",today:"Today"
+}};
+function t(key){return (translations[lang]||translations.ms)[key]||key}
+function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toast(msg){$("toast").textContent=msg;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3200)}
+function showMessage(el,msg,type="error"){el.innerHTML=`<div class="${type}">${escapeHtml(msg)}</div>`}
+function setBusy(btn,busy){btn.disabled=busy;btn.style.opacity=busy?".65":"1"}
+function formatDate(value){if(!value)return "—";return new Date(value).toLocaleString(lang==="ms"?"ms-MY":"en-MY",{dateStyle:"medium",timeStyle:"short"})}
+function ageFromDoc(date){
+ if(!date)return null;
+ const d=new Date(date+"T00:00:00");
+ if(Number.isNaN(d.getTime()))return null;
+ const days=Math.floor((new Date().setHours(0,0,0,0)-d.getTime())/86400000);
+ if(days<0)return {days,weeks:0,text:lang==="ms"?"DOC belum tiba":"DOC date is in the future"};
+ return {days,weeks:Math.floor(days/7),text:`${Math.floor(days/7)} ${t("weeks")} ${days%7} ${t("days")}`};
+}
+function setLanguage(){
+ document.documentElement.lang=lang==="ms"?"ms":"en";
+ document.querySelectorAll("[data-i]").forEach(el=>el.textContent=t(el.dataset.i));
+ $("langBtn").textContent=lang==="ms"?"EN":"BM";
+ if(currentUser) $("logoutBtn").textContent=t("logout");
+ renderFarms();if(activeFarm)renderHouses();
+}
+$("langBtn").addEventListener("click",()=>{lang=lang==="ms"?"en":"ms";setLanguage()});
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!sb){showMessage($("loginMessage"),t("config"));return}
+ const btn=e.submitter;setBusy(btn,true);$("loginMessage").innerHTML="";
+ try{
+  const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error)throw error;
+  currentUser=data.user;
+  await loadProfileAndApp();
+ }catch(err){showMessage($("loginMessage"),t("loginFailed")+" "+(err.message||""))}
+ finally{setBusy(btn,false)}
+});
+$("logoutBtn").addEventListener("click",async()=>{
+ if(sb)await sb.auth.signOut();
+ currentUser=null;currentProfile=null;farms=[];houses=[];activeFarm=null;
+ $("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("logoutBtn").classList.add("hidden");
+ $("farmDetail").classList.add("hidden");$("recordPanel").classList.add("hidden");
+});
+$("refreshBtn").addEventListener("click",loadFarms);
+$("backFarms").addEventListener("click",()=>{$("farmDetail").classList.add("hidden");$("recordPanel").classList.add("hidden");activeFarm=null});
+$("closeRecord").addEventListener("click",()=>$("recordPanel").classList.add("hidden"));
+
+async function loadProfileAndApp(){
+ const {data:profile,error}=await sb.from("profiles").select("id,full_name,role,active").eq("id",currentUser.id).maybeSingle();
+ if(error)throw error;
+ if(!profile||!profile.active){await sb.auth.signOut();throw new Error(t("profileMissing"))}
+ currentProfile=profile;
+ $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");
+ $("welcomeUser").textContent=`${profile.full_name||currentUser.email} · ${profile.role}`;
+ if(profile.role==="admin")showMessage($("noticeArea"),t("adminStaff"),"notice");else $("noticeArea").innerHTML="";
+ await loadFarms();
+}
+async function loadFarms(){
+ if(!sb||!currentUser)return;
+ $("farmList").innerHTML=`<div class="empty">${t("loading")}</div>`;
+ try{
+  // RLS menapis farm: staf nampak farm yang ditugaskan sahaja.
+  const {data,error}=await sb.from("farms").select("id,name,code,location,active,created_at").eq("active",true).order("name");
+  if(error)throw error;
+  farms=data||[];
+  $("farmCount").textContent=farms.length;
+  const {count:recordCount,error:recErr}=await sb.from("ventilation_records").select("id",{count:"exact",head:true});
+  if(recErr)throw recErr;
+  $("recordCount").textContent=recordCount||0;
+  const {data:last,error:lastErr}=await sb.from("ventilation_records").select("recorded_at").order("recorded_at",{ascending:false}).limit(1);
+  if(lastErr)throw lastErr;
+  $("lastUpdated").textContent=last?.length?formatDate(last[0].recorded_at):t("lastNone");
+  await renderFarms();
+ }catch(err){$("farmList").innerHTML="";showMessage($("noticeArea"),t("loadError")+" "+(err.message||""))}
+}
+async function renderFarms(){
+ if(!$("farmList"))return;
+ if(!farms.length){$("farmList").innerHTML=`<div class="empty">${t("noFarms")}</div>`;$("houseCount").textContent="0";return}
+ const {data:allHouses,error}=await sb.from("houses").select("id,farm_id").eq("active",true);
+ if(error){$("farmList").innerHTML=`<div class="empty">${t("loadError")}</div>`;return}
+ houses=allHouses||[];$("houseCount").textContent=houses.length;
+ $("farmList").innerHTML=farms.map(f=>{
+  const count=houses.filter(h=>h.farm_id===f.id).length;
+  return `<button class="farm-card" data-farm="${f.id}">
+    <div class="row"><div class="farm-icon">🏡</div><span class="pill">${count} ${t("houses").toLowerCase()}</span></div>
+    <h3>${escapeHtml(f.name)}</h3>
+    <div class="muted">${escapeHtml(f.code||"")}</div>
+    <div class="muted">${escapeHtml(f.location||"—")}</div>
+  </button>`;
+ }).join("");
+ $("farmList").querySelectorAll("[data-farm]").forEach(btn=>btn.addEventListener("click",()=>openFarm(btn.dataset.farm)));
+}
+async function openFarm(id){
+ activeFarm=farms.find(f=>f.id===id);if(!activeFarm)return;
+ $("farmTitle").textContent=activeFarm.name;
+ $("farmMeta").textContent=[activeFarm.code,activeFarm.location].filter(Boolean).join(" · ");
+ $("farmDetail").classList.remove("hidden");$("recordPanel").classList.add("hidden");
+ await renderHouses();
+ $("farmDetail").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function renderHouses(){
+ if(!activeFarm)return;
+ $("houseList").innerHTML=`<div class="empty">${t("loading")}</div>`;
+ const {data,error}=await sb.from("houses").select("id,farm_id,name,doc_date,notes,active").eq("farm_id",activeFarm.id).eq("active",true).order("name");
+ if(error){$("houseList").innerHTML=`<div class="empty">${t("loadError")}</div>`;return}
+ const rows=data||[];$("housePill").textContent=rows.length;
+ if(!rows.length){$("houseList").innerHTML=`<div class="empty">${t("noHouses")}</div>`;return}
+ $("houseList").innerHTML=rows.map(h=>{
+  const age=ageFromDoc(h.doc_date);
+  return `<div class="house-item">
+    <div class="row"><div class="farm-icon">🐔</div><span class="pill">${age?escapeHtml(age.text):"DOC —"}</span></div>
+    <h3>${escapeHtml(h.name)}</h3>
+    <div class="muted">${t("doc")}: ${escapeHtml(h.doc_date||"—")}</div>
+    <p class="muted">${escapeHtml(h.notes||"")}</p>
+    <button class="primary" data-house="${h.id}" style="width:100%">${t("ventRecord")}</button>
+  </div>`;
+ }).join("");
+ $("houseList").querySelectorAll("[data-house]").forEach(btn=>btn.addEventListener("click",()=>openRecord(btn.dataset.house)));
+}
+async function openRecord(id){
+ const {data:house,error}=await sb.from("houses").select("id,name,doc_date,farm_id").eq("id",id).maybeSingle();
+ if(error||!house){toast(t("loadError"));return}
+ $("recordHouseId").value=house.id;
+ $("recordHouseTitle").textContent=house.name;
+ const age=ageFromDoc(house.doc_date);
+ $("ageInfo").textContent=`${t("doc")}: ${house.doc_date||"—"} · ${t("age")}: ${age?age.text:"—"}`;
+ $("setPoint").value="";$("fanManual").value="";$("fanAuto").value="";$("coolingPad").value="";$("alarm").value="";$("notes").value="";
+ const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+ $("recordTime").value=now.toISOString().slice(0,16);
+ $("recordMessage").innerHTML="";
+ $("recordPanel").classList.remove("hidden");
+ $("recordPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("recordForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const btn=e.submitter;setBusy(btn,true);$("recordMessage").innerHTML="";
+ try{
+  const payload={
+   house_id:$("recordHouseId").value,
+   set_point:$("setPoint").value===""?null:Number($("setPoint").value),
+   fan_manual:$("fanManual").value.trim(),
+   fan_auto:$("fanAuto").value.trim(),
+   cooling_pad:$("coolingPad").value.trim(),
+   alarm:$("alarm").value,
+   notes:$("notes").value.trim(),
+   recorded_at:new Date($("recordTime").value).toISOString(),
+   updated_at:new Date().toISOString(),
+   updated_by:currentUser.id
+  };
+  const {error}=await sb.from("ventilation_records").insert(payload);
+  if(error)throw error;
+  showMessage($("recordMessage"),t("saved"),"success");
+  toast(t("saved"));
+  await loadFarms();
+ }catch(err){showMessage($("recordMessage"),t("saveFailed")+" "+(err.message||""))}
+ finally{setBusy(btn,false)}
+});
+
+async function init(){
+ if(!configured){showMessage($("loginMessage"),t("config"));return}
+ const {data:{session}}=await sb.auth.getSession();
+ if(session){currentUser=session.user;try{await loadProfileAndApp()}catch(e){showMessage($("loginMessage"),e.message||t("loadError"))}}
+}
+init();
+</script>
+</body>
+</html>
